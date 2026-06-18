@@ -143,17 +143,17 @@ const TIERS = [
     ring1:'#c084fc', ring2:null, obstBg:'#2b2440', obstAccent:'#ff5d8f',
     stars:'255,255,255', ptCol:['#5ee7ff','#c084fc','#ffd166','#ff9ed8'], orbCol:'#ffd166',
     shape:'circle' },
-  { id:'guerreiro',minScore:30, emoji:'⚔️', name:{pt:'GUERREIRO', en:'WARRIOR',   es:'GUERRERO'},
+  { id:'guerreiro',minScore:50, emoji:'⚔️', name:{pt:'GUERREIRO', en:'WARRIOR',   es:'GUERRERO'},
     bgTop:'#071b2e', bgBot:'#0c3a5c', playerGrad:['#e0f7ff','#5ee7ff','#0ea5e9'],
     ring1:'#5ee7ff', ring2:'#0ea5e9', obstBg:'#0f2840', obstAccent:'#5ee7ff',
     stars:'200,240,255', ptCol:['#5ee7ff','#fff','#0ea5e9','#ffd166'], orbCol:'#5ee7ff',
     shape:'diamond' },
-  { id:'mestre',   minScore:75, emoji:'🔮', name:{pt:'MESTRE',   en:'MASTER',    es:'MAESTRO'},
+  { id:'mestre',   minScore:120, emoji:'🔮', name:{pt:'MESTRE',   en:'MASTER',    es:'MAESTRO'},
     bgTop:'#071a12', bgBot:'#0d3b27', playerGrad:['#d1fae5','#34d399','#059669'],
     ring1:'#34d399', ring2:'#a7f3d0', obstBg:'#0a2a1a', obstAccent:'#34d399',
     stars:'200,255,220', ptCol:['#34d399','#fff7d6','#ffd166','#a7f3d0'], orbCol:'#34d399',
     shape:'star' },
-  { id:'lendario', minScore:150, emoji:'👑', name:{pt:'LENDÁRIO',  en:'LEGENDARY', es:'LEGENDARIO'},
+  { id:'lendario', minScore:250, emoji:'👑', name:{pt:'LENDÁRIO',  en:'LEGENDARY', es:'LEGENDARIO'},
     bgTop:'#1a1000', bgBot:'#4a2c00', playerGrad:['#fff7d6','#ffd166','#f59e0b'],
     ring1:'#ffd166', ring2:'#ff9ed8', obstBg:'#2a1800', obstAccent:'#ffd166',
     stars:'255,230,150', ptCol:['#ffd166','#fff7d6','#ff9ed8','#5ee7ff'], orbCol:'#ff9ed8',
@@ -460,8 +460,11 @@ function update(dt){
   for(const ob of obstacles){
     ob.x-=speed*dt;
     if(!auraMax){
-      const inX=player.x+player.r>ob.x&&player.x-player.r<ob.x+ob.w;
-      if(inX&&(player.y-player.r<ob.gapY||player.y+player.r>ob.gapY+ob.gapH)){gameOver();return;}
+      // hitbox menor que o visual pra ser justa mas sem deixar passar
+      const hr=player.r*0.72;
+      const inX=player.x+hr>ob.x+4 && player.x-hr<ob.x+ob.w-4;
+      const inY=player.y-hr<ob.gapY || player.y+hr>ob.gapY+ob.gapH;
+      if(inX && inY){gameOver();return;}
     }
     if(!ob.passed&&ob.x+ob.w<player.x-player.r){
       ob.passed=true;
@@ -524,7 +527,7 @@ function gameOver(){
 }
 
 // ─── ADS (AdMob via Capacitor) ───────────────────────────────────────────────
-const AD_ID='ca-app-pub-3940256099942544/1033173712'; // test ID
+const AD_ID='ca-app-pub-3479791414145941/4707904917'; // ID real AdMob
 let admobReady=false;
 async function initAds(){
   try{if(!window.Capacitor?.Plugins?.AdMob)return;
