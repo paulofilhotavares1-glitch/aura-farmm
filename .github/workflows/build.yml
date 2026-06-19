@@ -35,18 +35,58 @@ jobs:
       - name: Adicionar plataforma Android
         run: npx cap add android
 
+      - name: Adicionar ID do AdMob no AndroidManifest
+        run: |
+          MANIFEST="android/app/src/main/AndroidManifest.xml"
+          sed -i 's|</application>|    <meta-data\n            android:name="com.google.android.gms.ads.APPLICATION_ID"\n            android:value="ca-app-pub-3479791414145941~7859552560"/>\n    </application>|' $MANIFEST
+
       - name: Sincronizar arquivos do jogo
         run: npx cap sync android
 
-      - name: Compilar APK
+      - name: Gerar keystore de assinatura
+        run: |
+          keytool -genkey -v \
+            -keystore aura-farm.keystore \
+            -alias aurafarm \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass aurafarm2024 \
+            -keypass aurafarm2024 \
+            -dname "CN=Aura Farm, OU=Games, O=AuraFarm, L=Brasil, S=CE, C=BR"
+
+      - name: Compilar AAB assinado (Play Store)
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew bundleRelease --no-daemon
+        env:
+          KEYSTORE_PATH: ../aura-farm.keystore
+          KEY_ALIAS: aurafarm
+          KEY_PASSWORD: aurafarm2024
+          STORE_PASSWORD: aurafarm2024
 
-      - name: Salvar APK para download
+      - name: Assinar o AAB
+        run: |
+          jarsigner -verbose \
+            -sigalg SHA256withRSA \
+            -digestalg SHA-256 \
+            -keystore aura-farm.keystore \
+            -storepass aurafarm2024 \
+            -keypass aurafarm2024 \
+            android/app/build/outputs/bundle/release/app-release.aab \
+            aurafarm
+
+      - name: Salvar AAB assinado para download
         uses: actions/upload-artifact@v4
         with:
-          name: aura-farm-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: aura-farm-release
+          path: android/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 30
+
+      - name: Salvar Keystore (GUARDE COM SEGURANÇA!)
+        uses: actions/upload-artifact@v4
+        with:
+          name: aura-farm-keystore
+          path: aura-farm.keystore
           retention-days: 30
