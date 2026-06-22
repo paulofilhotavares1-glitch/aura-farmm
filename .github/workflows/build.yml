@@ -50,35 +50,36 @@ jobs:
       - name: Adicionar ID do AdMob
         run: |
           MANIFEST="android/app/src/main/AndroidManifest.xml"
-          sed -i 's|</application>|    <meta-data\n            android:name="com.google.android.gms.ads.APPLICATION_ID"\n            android:value="ca-app-pub-3479791414145941~7859552560"/>\n    </application>|' $MANIFEST
+          sed -i 's|</application>| <meta-data\n android:name="com.google.android.gms.ads.APPLICATION_ID"\n android:value="ca-app-pub-3479791414145941~7859552560"/>\n </application>|' $MANIFEST
+
+      - name: Decodificar Keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/aurafarm.keystore
 
       - name: Sincronizar arquivos do jogo
         run: npx cap sync android
 
-      - name: Gerar keystore fixa
+      - name: Configurar assinatura no build.gradle
         run: |
-          keytool -genkey -v \
-            -keystore android/app/aurafarm.keystore \
-            -alias aurafarm \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -storepass Aurafarm2024 \
-            -keypass Aurafarm2024 \
-            -dname "CN=AuraFarm,OU=Games,O=AuraFarm,L=Juazeiro,S=CE,C=BR"
+          cat >> android/app/build.gradle << EOF
 
-      - name: Configurar assinatura no gradle
-        run: |
-          sed -i '/buildTypes {/i\
-              signingConfigs {\
-                  release {\
-                      storeFile file("aurafarm.keystore")\
-                      storePassword "Aurafarm2024"\
-                      keyAlias "aurafarm"\
-                      keyPassword "Aurafarm2024"\
-                  }\
-              }' android/app/build.gradle
-          sed -i 's/signingConfig signingConfigs.debug/signingConfig signingConfigs.release/g' android/app/build.gradle
+          android {
+              signingConfigs {
+                  release {
+                      storeFile file("aurafarm.keystore")
+                      storePassword "Aurafarm2024"
+                      keyAlias "aurafarm"
+                      keyPassword "Aurafarm2024"
+                  }
+              }
+
+              buildTypes {
+                  release {
+                      signingConfig signingConfigs.release
+                  }
+              }
+          }
+          EOF
 
       - name: Compilar AAB assinado
         run: |
