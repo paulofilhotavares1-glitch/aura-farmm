@@ -32,7 +32,7 @@ jobs:
       - name: Instalar dependências
         run: npm install
 
-      - name: Atualizar ID do pacote no Capacitor
+      - name: Atualizar ID do pacote
         run: |
           sed -i 's/com.aurafarm.game/com.aurafarm.game1/g' capacitor.config.json
 
@@ -45,7 +45,7 @@ jobs:
           sed -i 's/compileSdkVersion 34/compileSdkVersion 35/g' android/app/build.gradle
           sed -i 's/targetSdk = 34/targetSdk = 35/g' android/app/build.gradle
           sed -i 's/compileSdk = 34/compileSdk = 35/g' android/app/build.gradle
-          sed -i 's/versionCode 1/versionCode 3/g' android/app/build.gradle
+          sed -i 's/versionCode 1/versionCode 4/g' android/app/build.gradle
 
       - name: Adicionar ID do AdMob
         run: |
@@ -55,7 +55,25 @@ jobs:
       - name: Sincronizar arquivos do jogo
         run: npx cap sync android
 
-      - name: Compilar AAB
+      - name: Restaurar keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/aurafarm.keystore
+
+      - name: Configurar assinatura
+        run: |
+          cat >> android/app/build.gradle << 'EOF'
+          android.signingConfigs {
+            release {
+              storeFile file("aurafarm.keystore")
+              storePassword "Aurafarm2024"
+              keyAlias "aurafarm"
+              keyPassword "Aurafarm2024"
+            }
+          }
+          android.buildTypes.release.signingConfig = android.signingConfigs.release
+          EOF
+
+      - name: Compilar AAB assinado
         run: |
           cd android
           chmod +x gradlew
