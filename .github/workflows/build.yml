@@ -35,6 +35,13 @@ jobs:
       - name: Adicionar plataforma Android
         run: npx cap add android
 
+      - name: Corrigir targetSdkVersion para 35
+        run: |
+          sed -i 's/targetSdkVersion 34/targetSdkVersion 35/g' android/app/build.gradle
+          sed -i 's/compileSdkVersion 34/compileSdkVersion 35/g' android/app/build.gradle
+          sed -i 's/targetSdk = 34/targetSdk = 35/g' android/app/build.gradle
+          sed -i 's/compileSdk = 34/compileSdk = 35/g' android/app/build.gradle
+
       - name: Adicionar ID do AdMob no AndroidManifest
         run: |
           MANIFEST="android/app/src/main/AndroidManifest.xml"
@@ -55,7 +62,7 @@ jobs:
             -keypass aurafarm2024 \
             -dname "CN=Aura Farm, OU=Games, O=AuraFarm, L=Brasil, S=CE, C=BR"
 
-      - name: Compilar AAB assinado (Play Store)
+      - name: Compilar AAB assinado
         run: |
           cd android
           chmod +x gradlew
@@ -77,14 +84,14 @@ jobs:
             android/app/build/outputs/bundle/release/app-release.aab \
             aurafarm
 
-      - name: Salvar AAB assinado para download
+      - name: Salvar AAB assinado
         uses: actions/upload-artifact@v4
         with:
           name: aura-farm-release
           path: android/app/build/outputs/bundle/release/app-release.aab
           retention-days: 30
 
-      - name: Salvar Keystore (GUARDE COM SEGURANÇA!)
+      - name: Salvar Keystore
         uses: actions/upload-artifact@v4
         with:
           name: aura-farm-keystore
