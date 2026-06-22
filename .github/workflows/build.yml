@@ -32,16 +32,20 @@ jobs:
       - name: Instalar dependências
         run: npm install
 
+      - name: Atualizar ID do pacote no Capacitor
+        run: |
+          sed -i 's/com.aurafarm.game/com.aurafarm.game1/g' capacitor.config.json
+
       - name: Adicionar plataforma Android
         run: npx cap add android
 
-      - name: Corrigir versão e SDK
+      - name: Corrigir SDK e versão
         run: |
           sed -i 's/targetSdkVersion 34/targetSdkVersion 35/g' android/app/build.gradle
           sed -i 's/compileSdkVersion 34/compileSdkVersion 35/g' android/app/build.gradle
           sed -i 's/targetSdk = 34/targetSdk = 35/g' android/app/build.gradle
           sed -i 's/compileSdk = 34/compileSdk = 35/g' android/app/build.gradle
-          sed -i 's/versionCode 1/versionCode 2/g' android/app/build.gradle
+          sed -i 's/versionCode 1/versionCode 3/g' android/app/build.gradle
 
       - name: Adicionar ID do AdMob
         run: |
@@ -51,33 +55,7 @@ jobs:
       - name: Sincronizar arquivos do jogo
         run: npx cap sync android
 
-      - name: Gerar keystore
-        run: |
-          keytool -genkey -v \
-            -keystore android/app/aurafarm.keystore \
-            -alias aurafarm \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -storepass Aurafarm2024 \
-            -keypass Aurafarm2024 \
-            -dname "CN=AuraFarm,OU=Games,O=AuraFarm,L=Juazeiro,S=CE,C=BR"
-
-      - name: Configurar assinatura
-        run: |
-          cat >> android/app/build.gradle << 'EOF'
-          android.signingConfigs {
-            release {
-              storeFile file("aurafarm.keystore")
-              storePassword "Aurafarm2024"
-              keyAlias "aurafarm"
-              keyPassword "Aurafarm2024"
-            }
-          }
-          android.buildTypes.release.signingConfig = android.signingConfigs.release
-          EOF
-
-      - name: Compilar AAB assinado
+      - name: Compilar AAB
         run: |
           cd android
           chmod +x gradlew
@@ -88,11 +66,4 @@ jobs:
         with:
           name: aura-farm-release
           path: android/app/build/outputs/bundle/release/app-release.aab
-          retention-days: 30
-
-      - name: Salvar Keystore
-        uses: actions/upload-artifact@v4
-        with:
-          name: aura-farm-keystore
-          path: android/app/aurafarm.keystore
           retention-days: 30
