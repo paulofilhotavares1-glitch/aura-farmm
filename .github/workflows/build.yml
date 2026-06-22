@@ -1,6 +1,5 @@
 name: Compilar APK - Aura Farm
 
-
 on:
   push:
     branches: [ main ]
@@ -36,12 +35,13 @@ jobs:
       - name: Adicionar plataforma Android
         run: npx cap add android
 
-      - name: Corrigir targetSdkVersion para 35
+      - name: Corrigir versão e SDK
         run: |
           sed -i 's/targetSdkVersion 34/targetSdkVersion 35/g' android/app/build.gradle
           sed -i 's/compileSdkVersion 34/compileSdkVersion 35/g' android/app/build.gradle
           sed -i 's/targetSdk = 34/targetSdk = 35/g' android/app/build.gradle
           sed -i 's/compileSdk = 34/compileSdk = 35/g' android/app/build.gradle
+          sed -i 's/versionCode 1/versionCode 2/g' android/app/build.gradle
 
       - name: Adicionar ID do AdMob
         run: |
@@ -51,34 +51,7 @@ jobs:
       - name: Sincronizar arquivos do jogo
         run: npx cap sync android
 
-      - name: Configurar assinatura no build.gradle
-        run: |
-          cat >> android/app/build.gradle << 'GRADLE'
-
-          android.signingConfigs {
-            release {
-              storeFile file("keystore.jks")
-              storePassword "Aurafarm@2024"
-              keyAlias "aurafarm"
-              keyPassword "Aurafarm@2024"
-            }
-          }
-          android.buildTypes.release.signingConfig = android.signingConfigs.release
-          GRADLE
-
-      - name: Gerar keystore
-        run: |
-          keytool -genkey -v \
-            -keystore android/app/keystore.jks \
-            -alias aurafarm \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -storepass "Aurafarm@2024" \
-            -keypass "Aurafarm@2024" \
-            -dname "CN=Aura Farm,OU=Games,O=AuraFarm,L=Juazeiro do Norte,S=CE,C=BR"
-
-      - name: Compilar AAB assinado
+      - name: Compilar AAB
         run: |
           cd android
           chmod +x gradlew
