@@ -42,7 +42,7 @@ jobs:
           sed -i 's/targetSdk = 34/targetSdk = 35/g' android/app/build.gradle
           sed -i 's/compileSdk = 34/compileSdk = 35/g' android/app/build.gradle
 
-      - name: Adicionar ID do AdMob no AndroidManifest
+      - name: Adicionar ID do AdMob
         run: |
           MANIFEST="android/app/src/main/AndroidManifest.xml"
           sed -i 's|</application>|    <meta-data\n            android:name="com.google.android.gms.ads.APPLICATION_ID"\n            android:value="ca-app-pub-3479791414145941~7859552560"/>\n    </application>|' $MANIFEST
@@ -50,13 +50,40 @@ jobs:
       - name: Sincronizar arquivos do jogo
         run: npx cap sync android
 
-      - name: Compilar AAB não assinado (Google assina)
+      - name: Configurar assinatura no build.gradle
+        run: |
+          cat >> android/app/build.gradle << 'GRADLE'
+
+          android.signingConfigs {
+            release {
+              storeFile file("keystore.jks")
+              storePassword "Aurafarm@2024"
+              keyAlias "aurafarm"
+              keyPassword "Aurafarm@2024"
+            }
+          }
+          android.buildTypes.release.signingConfig = android.signingConfigs.release
+          GRADLE
+
+      - name: Gerar keystore
+        run: |
+          keytool -genkey -v \
+            -keystore android/app/keystore.jks \
+            -alias aurafarm \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass "Aurafarm@2024" \
+            -keypass "Aurafarm@2024" \
+            -dname "CN=Aura Farm,OU=Games,O=AuraFarm,L=Juazeiro do Norte,S=CE,C=BR"
+
+      - name: Compilar AAB assinado
         run: |
           cd android
           chmod +x gradlew
           ./gradlew bundleRelease --no-daemon
 
-      - name: Salvar AAB para download
+      - name: Salvar AAB
         uses: actions/upload-artifact@v4
         with:
           name: aura-farm-release
