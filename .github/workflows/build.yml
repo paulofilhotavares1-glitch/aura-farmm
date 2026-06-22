@@ -51,7 +51,33 @@ jobs:
       - name: Sincronizar arquivos do jogo
         run: npx cap sync android
 
-      - name: Compilar AAB
+      - name: Gerar keystore
+        run: |
+          keytool -genkey -v \
+            -keystore android/app/aurafarm.keystore \
+            -alias aurafarm \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass Aurafarm2024 \
+            -keypass Aurafarm2024 \
+            -dname "CN=AuraFarm,OU=Games,O=AuraFarm,L=Juazeiro,S=CE,C=BR"
+
+      - name: Configurar assinatura
+        run: |
+          cat >> android/app/build.gradle << 'EOF'
+          android.signingConfigs {
+            release {
+              storeFile file("aurafarm.keystore")
+              storePassword "Aurafarm2024"
+              keyAlias "aurafarm"
+              keyPassword "Aurafarm2024"
+            }
+          }
+          android.buildTypes.release.signingConfig = android.signingConfigs.release
+          EOF
+
+      - name: Compilar AAB assinado
         run: |
           cd android
           chmod +x gradlew
@@ -62,4 +88,11 @@ jobs:
         with:
           name: aura-farm-release
           path: android/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 30
+
+      - name: Salvar Keystore
+        uses: actions/upload-artifact@v4
+        with:
+          name: aura-farm-keystore
+          path: android/app/aurafarm.keystore
           retention-days: 30
