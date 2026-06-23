@@ -33,55 +33,50 @@ jobs:
         run: npm install
 
       - name: Atualizar ID do pacote
-        run: |
-          sed -i 's/com.aurafarm.game/com.aurafarm.game1/g' capacitor.config.json
+        run: sed -i 's/com.aurafarm.game/com.aurafarm.game1/g' capacitor.config.json
 
       - name: Adicionar plataforma Android
         run: npx cap add android
 
-      - name: Corrigir SDK e versão
+      - name: Corrigir SDK, versão e assinatura
         run: |
-          sed -i 's/targetSdkVersion 34/targetSdkVersion 35/g' android/app/build.gradle
-          sed -i 's/compileSdkVersion 34/compileSdkVersion 35/g' android/app/build.gradle
-          sed -i 's/targetSdk = 34/targetSdk = 35/g' android/app/build.gradle
-          sed -i 's/compileSdk = 34/compileSdk = 35/g' android/app/build.gradle
-          sed -i 's/versionCode 1/versionCode 5/g' android/app/build.gradle
+          cd android
+
+          # Atualiza SDK
+          sed -i 's/targetSdkVersion 34/targetSdkVersion 35/g' app/build.gradle
+          sed -i 's/compileSdkVersion 34/compileSdkVersion 35/g' app/build.gradle
+          sed -i 's/targetSdk = 34/targetSdk = 35/g' app/build.gradle
+          sed -i 's/compileSdk = 34/compileSdk = 35/g' app/build.gradle
+          
+          # Atualiza versionCode (aumente este número toda vez)
+          sed -i 's/versionCode [0-9]*/versionCode 6/g' app/build.gradle
+
+          # Configura assinatura (método mais confiável)
+          sed -i '/defaultConfig {/a\
+              signingConfig signingConfigs.release\
+          ' app/build.gradle
+
+          # Adiciona o signingConfigs
+          sed -i '/android {/a\
+              signingConfigs {\
+                  release {\
+                      storeFile file("aurafarm.keystore")\
+                      storePassword "Aurafarm2024"\
+                      keyAlias "aurafarm"\
+                      keyPassword "Aurafarm2024"\
+                  }\
+              }\
+          ' app/build.gradle
 
       - name: Adicionar ID do AdMob
         run: |
           MANIFEST="android/app/src/main/AndroidManifest.xml"
-          sed -i 's|</application>| <meta-data\n android:name="com.google.android.gms.ads.APPLICATION_ID"\n android:value="ca-app-pub-3479791414145941~7859552560"/>\n </application>|' $MANIFEST
+          sed -i 's|</application>| <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-3479791414145941~7859552560"/>\n </application>|' $MANIFEST
 
-      - name: Decodificar Keystore
-        run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/aurafarm.keystore
-
-      - name: Sincronizar arquivos do jogo
+      - name: Sincronizar arquivos
         run: npx cap sync android
 
-      - name: Configurar assinatura no build.gradle
-        run: |
-          cat >> android/app/build.gradle << EOF
-
-          android {
-              signingConfigs {
-                  release {
-                      storeFile file("aurafarm.keystore")
-                      storePassword "Aurafarm2024"
-                      keyAlias "aurafarm"
-                      keyPassword "Aurafarm2024"
-                  }
-              }
-
-              buildTypes {
-                  release {
-                      signingConfig signingConfigs.release
-                  }
-              }
-          }
-          EOF
-
-      - name: Compilar AAB assinado
+      - name: Compilar AAB
         run: |
           cd android
           chmod +x gradlew
