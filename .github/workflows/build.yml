@@ -50,17 +50,18 @@ jobs:
           MANIFEST="android/app/src/main/AndroidManifest.xml"
           sed -i 's|</application>|    <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-3479791414145941~7859552560"/>\n    </application>|' $MANIFEST
 
+      - name: Mostrar build.gradle original
+        run: cat android/app/build.gradle
+
       - name: Corrigir SDK e versão
         run: |
-          sed -i 's/compileSdkVersion 34/compileSdkVersion 35/g' android/app/build.gradle
-          sed -i 's/targetSdkVersion 34/targetSdkVersion 35/g' android/app/build.gradle
-          sed -i 's/compileSdk = 34/compileSdk = 35/g' android/app/build.gradle
-          sed -i 's/targetSdk = 34/targetSdk = 35/g' android/app/build.gradle
-          sed -i 's/compileSdk 34/compileSdk 35/g' android/app/build.gradle
-          sed -i 's/targetSdk 34/targetSdk 35/g' android/app/build.gradle
-          sed -i 's/versionCode [0-9]*/versionCode 10/g' android/app/build.gradle
-          echo "=== build.gradle ==="
-          grep -E "compileSdk|targetSdk|versionCode" android/app/build.gradle
+          perl -i -pe 's/compileSdkVersion\s+\d+/compileSdkVersion 35/g' android/app/build.gradle
+          perl -i -pe 's/targetSdkVersion\s+\d+/targetSdkVersion 35/g' android/app/build.gradle
+          perl -i -pe 's/compileSdk\s*=?\s*\d+/compileSdk = 35/g' android/app/build.gradle
+          perl -i -pe 's/targetSdk\s*=?\s*\d+/targetSdk = 35/g' android/app/build.gradle
+          perl -i -pe 's/versionCode\s+\d+/versionCode 11/g' android/app/build.gradle
+          echo "=== APÓS CORREÇÃO ==="
+          cat android/app/build.gradle
 
       - name: Sincronizar arquivos do jogo
         run: npx cap sync android
