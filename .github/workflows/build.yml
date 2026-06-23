@@ -57,8 +57,8 @@ jobs:
           perl -i -pe 's/compileSdkVersion\s*=\s*\d+/compileSdkVersion = 35/g' android/variables.gradle
           perl -i -pe 's/targetSdkVersion\s*=\s*\d+/targetSdkVersion = 35/g' android/variables.gradle
           perl -i -pe 's/minSdkVersion\s*=\s*\d+/minSdkVersion = 22/g' android/variables.gradle
-          perl -i -pe 's/versionCode\s*=\s*\d+/versionCode = 13/g' android/variables.gradle
-          perl -i -pe 's/versionCode\s+\d+/versionCode 13/g' android/app/build.gradle
+          perl -i -pe 's/versionCode\s*=\s*\d+/versionCode = 14/g' android/variables.gradle
+          perl -i -pe 's/versionCode\s+\d+/versionCode 14/g' android/app/build.gradle
           echo "=== APÓS CORREÇÃO ==="
           cat android/variables.gradle
 
