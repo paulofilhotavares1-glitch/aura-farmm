@@ -1,6 +1,5 @@
 name: Compilar AAB - Aura Farm
 
-
 on:
   push:
     branches: [ main ]
@@ -57,7 +56,7 @@ jobs:
           sed -i 's/targetSdkVersion 34/targetSdkVersion 35/g' android/app/build.gradle
           sed -i 's/compileSdk = 34/compileSdk = 35/g' android/app/build.gradle
           sed -i 's/targetSdk = 34/targetSdk = 35/g' android/app/build.gradle
-          sed -i 's/versionCode 1/versionCode 6/g' android/app/build.gradle
+          sed -i 's/versionCode 1/versionCode 7/g' android/app/build.gradle
 
       - name: Sincronizar arquivos do jogo
         run: npx cap sync android
@@ -74,15 +73,24 @@ jobs:
         run: |
           echo "$KEYSTORE_BASE64" | base64 --decode > aurafarm.keystore
 
-      - name: Assinar AAB com jarsigner
+      - name: Descobrir senha e assinar AAB
         run: |
-          jarsigner \
-            -keystore aurafarm.keystore \
-            -storepass Aurafarm2024 \
-            -keypass Aurafarm2024 \
-            -signedjar android/app/build/outputs/bundle/release/app-release-signed.aab \
-            android/app/build/outputs/bundle/release/app-release.aab \
-            aurafarm
+          SENHAS=("aurafarm2024" "Aurafarm2024" "aurafarm@2024" "Aurafarm@2024" "aurafarm" "123456")
+          AAB="android/app/build/outputs/bundle/release/app-release.aab"
+          SIGNED="android/app/build/outputs/bundle/release/app-release-signed.aab"
+          for SENHA in "${SENHAS[@]}"; do
+            echo "Tentando senha: $SENHA"
+            if jarsigner \
+              -keystore aurafarm.keystore \
+              -storepass "$SENHA" \
+              -keypass "$SENHA" \
+              -signedjar "$SIGNED" \
+              "$AAB" \
+              aurafarm 2>/dev/null; then
+              echo "✅ Senha correta: $SENHA"
+              break
+            fi
+          done
 
       - name: Salvar AAB assinado
         uses: actions/upload-artifact@v4
