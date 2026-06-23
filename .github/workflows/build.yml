@@ -50,12 +50,16 @@ jobs:
           MANIFEST="android/app/src/main/AndroidManifest.xml"
           sed -i 's|</application>|    <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-3479791414145941~7859552560"/>\n    </application>|' $MANIFEST
 
-      - name: Corrigir SDK
+      - name: Corrigir SDK para 35
         run: |
           sed -i 's/compileSdkVersion 34/compileSdkVersion 35/g' android/app/build.gradle
           sed -i 's/targetSdkVersion 34/targetSdkVersion 35/g' android/app/build.gradle
           sed -i 's/compileSdk = 34/compileSdk = 35/g' android/app/build.gradle
           sed -i 's/targetSdk = 34/targetSdk = 35/g' android/app/build.gradle
+          sed -i 's/compileSdk 34/compileSdk 35/g' android/app/build.gradle
+          sed -i 's/targetSdk 34/targetSdk 35/g' android/app/build.gradle
+          echo "=== build.gradle após correção ==="
+          cat android/app/build.gradle
 
       - name: Sincronizar arquivos do jogo
         run: npx cap sync android
@@ -80,7 +84,6 @@ jobs:
           SIGNED="android/app/build/outputs/bundle/release/app-release-signed.aab"
           for ALIAS in "${ALIAS_LIST[@]}"; do
             for SENHA in "${SENHAS[@]}"; do
-              echo "Tentando alias=$ALIAS senha=$SENHA"
               if jarsigner \
                 -keystore aurafarm.keystore \
                 -storepass "$SENHA" \
@@ -88,12 +91,11 @@ jobs:
                 -signedjar "$SIGNED" \
                 "$AAB" \
                 "$ALIAS" 2>/dev/null; then
-                echo "✅ Funcionou! alias=$ALIAS senha=$SENHA"
+                echo "✅ alias=$ALIAS senha=$SENHA"
                 exit 0
               fi
             done
           done
-          echo "❌ Nenhuma senha funcionou"
           exit 1
 
       - name: Salvar AAB assinado
