@@ -59,48 +59,15 @@ jobs:
         run: |
           echo "$KEYSTORE_BASE64" | base64 --decode > android/app/aurafarm.keystore
 
-      - name: Reescrever build.gradle com assinatura
+      - name: Configurar assinatura no build.gradle
         run: |
-          cat > android/app/build.gradle << 'EOF'
-          apply plugin: 'com.android.application'
-
-          android {
-              namespace "com.aurafarm.game1"
-              compileSdkVersion 35
-              defaultConfig {
-                  applicationId "com.aurafarm.game1"
-                  minSdkVersion 22
-                  targetSdkVersion 35
-                  versionCode 5
-                  versionName "1.0"
-              }
-              signingConfigs {
-                  release {
-                      storeFile file("aurafarm.keystore")
-                      storePassword "Aurafarm2024"
-                      keyAlias "aurafarm"
-                      keyPassword "Aurafarm2024"
-                  }
-              }
-              buildTypes {
-                  release {
-                      minifyEnabled false
-                      signingConfig signingConfigs.release
-                  }
-              }
-          }
-
-          repositories {
-              google()
-              mavenCentral()
-          }
-
-          dependencies {
-              implementation fileTree(include: ['*.jar'], dir: 'libs')
-              implementation 'androidx.appcompat:appcompat:1.6.1'
-              implementation project(':capacitor-android')
-          }
-          EOF
+          sed -i 's/compileSdkVersion 34/compileSdkVersion 35/g' android/app/build.gradle
+          sed -i 's/targetSdkVersion 34/targetSdkVersion 35/g' android/app/build.gradle
+          sed -i 's/compileSdk = 34/compileSdk = 35/g' android/app/build.gradle
+          sed -i 's/targetSdk = 34/targetSdk = 35/g' android/app/build.gradle
+          sed -i 's/versionCode 1/versionCode 5/g' android/app/build.gradle
+          sed -i "/android {/a\\    signingConfigs {\n        release {\n            storeFile file(\"aurafarm.keystore\")\n            storePassword \"Aurafarm2024\"\n            keyAlias \"aurafarm\"\n            keyPassword \"Aurafarm2024\"\n        }\n    }" android/app/build.gradle
+          sed -i 's/signingConfig signingConfigs.debug/signingConfig signingConfigs.release/g' android/app/build.gradle
 
       - name: Compilar AAB assinado
         run: |
