@@ -50,18 +50,19 @@ jobs:
           MANIFEST="android/app/src/main/AndroidManifest.xml"
           sed -i 's|</application>|    <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-3479791414145941~7859552560"/>\n    </application>|' $MANIFEST
 
-      - name: Mostrar build.gradle original
-        run: cat android/app/build.gradle
-
-      - name: Corrigir SDK e versão
+      - name: Corrigir SDK no build.gradle raiz
         run: |
-          perl -i -pe 's/compileSdkVersion\s+\d+/compileSdkVersion 35/g' android/app/build.gradle
-          perl -i -pe 's/targetSdkVersion\s+\d+/targetSdkVersion 35/g' android/app/build.gradle
-          perl -i -pe 's/compileSdk\s*=?\s*\d+/compileSdk = 35/g' android/app/build.gradle
-          perl -i -pe 's/targetSdk\s*=?\s*\d+/targetSdk = 35/g' android/app/build.gradle
-          perl -i -pe 's/versionCode\s+\d+/versionCode 11/g' android/app/build.gradle
-          echo "=== APÓS CORREÇÃO ==="
-          cat android/app/build.gradle
+          echo "=== build.gradle RAIZ ==="
+          cat android/build.gradle
+          perl -i -pe 's/compileSdkVersion\s*=?\s*\d+/compileSdkVersion = 35/g' android/build.gradle
+          perl -i -pe 's/targetSdkVersion\s*=?\s*\d+/targetSdkVersion = 35/g' android/build.gradle
+          perl -i -pe 's/minSdkVersion\s*=?\s*\d+/minSdkVersion = 22/g' android/build.gradle
+          echo "=== APÓS CORREÇÃO RAIZ ==="
+          cat android/build.gradle
+
+      - name: Corrigir versionCode
+        run: |
+          perl -i -pe 's/versionCode\s+\d+/versionCode 12/g' android/app/build.gradle
 
       - name: Sincronizar arquivos do jogo
         run: npx cap sync android
