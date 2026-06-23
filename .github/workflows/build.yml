@@ -50,34 +50,42 @@ jobs:
           MANIFEST="android/app/src/main/AndroidManifest.xml"
           sed -i 's|</application>|    <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="ca-app-pub-3479791414145941~7859552560"/>\n    </application>|' $MANIFEST
 
-      - name: Sincronizar arquivos do jogo
-        run: npx cap sync android
-
-      - name: Restaurar keystore
-        env:
-          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-        run: |
-          echo "$KEYSTORE_BASE64" | base64 --decode > android/app/aurafarm.keystore
-
-      - name: Configurar assinatura no build.gradle
+      - name: Corrigir SDK
         run: |
           sed -i 's/compileSdkVersion 34/compileSdkVersion 35/g' android/app/build.gradle
           sed -i 's/targetSdkVersion 34/targetSdkVersion 35/g' android/app/build.gradle
           sed -i 's/compileSdk = 34/compileSdk = 35/g' android/app/build.gradle
           sed -i 's/targetSdk = 34/targetSdk = 35/g' android/app/build.gradle
-          sed -i 's/versionCode 1/versionCode 5/g' android/app/build.gradle
-          sed -i "/android {/a\\    signingConfigs {\n        release {\n            storeFile file(\"aurafarm.keystore\")\n            storePassword \"Aurafarm2024\"\n            keyAlias \"aurafarm\"\n            keyPassword \"Aurafarm2024\"\n        }\n    }" android/app/build.gradle
-          sed -i 's/signingConfig signingConfigs.debug/signingConfig signingConfigs.release/g' android/app/build.gradle
+          sed -i 's/versionCode 1/versionCode 6/g' android/app/build.gradle
 
-      - name: Compilar AAB assinado
+      - name: Sincronizar arquivos do jogo
+        run: npx cap sync android
+
+      - name: Compilar AAB não assinado
         run: |
           cd android
           chmod +x gradlew
           ./gradlew bundleRelease --no-daemon
 
-      - name: Salvar AAB
+      - name: Restaurar keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 --decode > aurafarm.keystore
+
+      - name: Assinar AAB com jarsigner
+        run: |
+          jarsigner \
+            -keystore aurafarm.keystore \
+            -storepass Aurafarm2024 \
+            -keypass Aurafarm2024 \
+            -signedjar android/app/build/outputs/bundle/release/app-release-signed.aab \
+            android/app/build/outputs/bundle/release/app-release.aab \
+            aurafarm
+
+      - name: Salvar AAB assinado
         uses: actions/upload-artifact@v4
         with:
           name: aura-farm-release
-          path: android/app/build/outputs/bundle/release/app-release.aab
+          path: android/app/build/outputs/bundle/release/app-release-signed.aab
           retention-days: 30
